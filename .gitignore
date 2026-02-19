@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Enviroments
+/.env/
+
+# PyCharm
+/.idea/
+
+# data / results
+/checkpoints
+/data
+/display
+/result
+/results
+
+# temporary files
+bar.py
+nohup.out
+temp*
+*.log
+*.tar
