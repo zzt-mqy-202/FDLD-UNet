@@ -19,10 +19,14 @@
 ├── checkpoints
 │   ├── isic2017
 │   │   ├── fdld_unet
-│   │   │   │   ├── train.pth
-│   │   │   │   ...
+│   │   │   ├── train.pth
+│   │   │   ├── epoch_000.pth
+│   │   │   ├── epoch_050.pth
+│   │   │   ...
+│   │   ...
+│   ...
 ├── dataloaders
 ├── models
-├── script
-├── train.py
+├── scripts
+└── train.py
 ```

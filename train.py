@@ -72,10 +72,10 @@ def main(args):
         model=model,
         optimizer=optimizer,
         scheduler=scheduler,
-        train_loader = training_dataloader,
-        valid_loader = validation_dataloader,
-        epochs = epochs,
-        result_dir = checkpoint_dir,
+        train_loader=training_dataloader,
+        valid_loader=validation_dataloader,
+        epochs=epochs,
+        result_dir=checkpoint_dir,
     )
 
 
@@ -148,7 +148,7 @@ def fit(model, optimizer, scheduler, train_loader, valid_loader, epochs, result_
         }
         torch.save(data, checkpoint_path)
         if ep_idx % 50 == 0:
-            torch.save(data, result_dir / f'model_epoch_{ep_idx:03d}.pth')
+            torch.save(data, result_dir / f'epoch_{ep_idx:03d}.pth')
 
 
 if __name__ == '__main__':
