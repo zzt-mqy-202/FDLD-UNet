@@ -5,6 +5,12 @@ OUTPUT=./checkpoints/isic2017
 
 MODEL=fdld_unet
 
+spatial_dims=2
+in_channels=3
+num_classes=2
+img_size=256
+num_workers=4
+
 batch_size=1
 
 epochs=20
@@ -22,6 +28,9 @@ sched=cosine
 python train.py \
     --input $INPUT --output $OUTPUT \
     --model $MODEL \
+    --spatial_dims $spatial_dims --in_channels $in_channels \
+    --num_classes $num_classes --img_size $img_size \
+    --num_workers $num_workers \
     --batch_size $batch_size \
     --epochs $epochs --min_epochs $min_epochs\
     --valid_interval $valid_interval --test_interval $test_interval\
