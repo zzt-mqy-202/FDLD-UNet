@@ -7,10 +7,10 @@ from timm.scheduler import create_scheduler
 
 from dataloaders import FolderLoader
 
-from models import create_model
+from models import build_model
 import torch.nn as nn
 from torch.utils.data import DataLoader
-device = torch.device('cuda')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def parse_arguments():
@@ -23,6 +23,19 @@ def parse_arguments():
 
     parser.add_argument('--model', type=str,
                         help='Model Name')
+
+    parser.add_argument('--spatial_dims', type=int, default=2,
+                        choices=(2, 3), help='2D or 3D model')
+    parser.add_argument('--in_channels', type=int, default=3,
+                        help='Number of input channels')
+    parser.add_argument('--num_classes', type=int, default=2,
+                        help='Number of segmentation classes')
+    parser.add_argument('--img_size', type=int, default=256,
+                        help='2D resize size')
+    parser.add_argument('--num_workers', type=int, default=4,
+                        help='DataLoader worker count')
+    parser.add_argument('--device', type=str, default=None,
+                        help='Device, for example cuda or cpu')
 
     parser.add_argument('--batch_size', type=int,
                         help='Batch Size for training')
@@ -53,18 +66,41 @@ def parse_arguments():
 def main(args):
     print(args)
 
+    global device
+    if args.device is not None:
+        device = torch.device(args.device)
     batch_size = args.batch_size
     epochs = args.epochs
 
     training_dir = Path(args.input, 'training')
-    training_dataloader = FolderLoader(training_dir, batch_size=batch_size, shuffle=True, num_workers=16)
+    if args.spatial_dims != 2:
+        raise NotImplementedError(
+            'The current FolderLoader reads 2D image/mask folders. '
+            'Use a volume loader for D3_FDLD.'
+        )
+
+    training_dataloader = FolderLoader(
+        training_dir, img_size=args.img_size, batch_size=batch_size,
+        shuffle=True, num_workers=args.num_workers,
+        pin_memory=(device.type == 'cuda'),
+    )
 
     validation_dir = Path(args.input, 'validation')
-    validation_dataloader = FolderLoader(validation_dir, batch_size=batch_size, shuffle=False, num_workers=16)
+    validation_dataloader = FolderLoader(
+        validation_dir, img_size=args.img_size, batch_size=batch_size,
+        shuffle=False, num_workers=args.num_workers,
+        pin_memory=(device.type == 'cuda'),
+    )
 
     checkpoint_dir = Path(args.output, args.model)
 
-    model = create_model(args.model, spatial_dims=2, in_channels=3, num_classes=2, img_size=256)
+    model = build_model(
+        args.model,
+        spatial_dims=args.spatial_dims,
+        in_channels=args.in_channels,
+        num_classes=args.num_classes,
+        img_size=args.img_size,
+    )
     optimizer = create_optimizer(args, model)
     scheduler, _ = create_scheduler(args, optimizer)
 
@@ -118,12 +154,12 @@ def validate(
 
 def fit(model, optimizer, scheduler, train_loader, valid_loader, epochs, result_dir) -> None:
     result_dir.mkdir(parents=True, exist_ok=True)
-    model = model.cuda()
+    model = model.to(device)
 
     e0 = 0
     checkpoint_path = result_dir/'train.pth'
     if checkpoint_path.exists():
-        checkpoint = torch.load(checkpoint_path)
+        checkpoint = torch.load(checkpoint_path, map_location=device)
         e0 = checkpoint['epoch']
         model.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
